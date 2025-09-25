@@ -65,9 +65,26 @@ class ExDate extends Date {
 }
 
 /**
+ * refreshTrigger関数用のトリガーを初期化します。
+ * 既に存在する場合は何もせず、存在しない場合は毎日3時に実行されるトリガーを作成します。
+ * この関数はmain関数の最初に呼び出され、トリガーが常に存在することを保証します。
+ */
+function initTrigger() {
+  if (ScriptApp.getProjectTriggers().some(trigger => trigger.getHandlerFunction() === "refreshTrigger")) {
+    return;
+  }
+  ScriptApp
+    .newTrigger("refreshTrigger")
+    .timeBased()
+    .everyDays(1)
+    .atHour(3)
+    .create();
+  Logger.log("refreshTrigger用のトリガーを新規作成しました");
+}
+
+/**
  * スクリプトの実行トリガーを再設定します。
  * 既存の'main'関数用トリガーをすべて削除し、指定された時刻に実行される新しいトリガーを作成します。
- * この関数は手動で実行することを想定しています。
  */
 function refreshTrigger() {
   const allTriggers = ScriptApp.getProjectTriggers();
@@ -85,6 +102,7 @@ function refreshTrigger() {
   }
 
   ScriptApp.newTrigger("main").timeBased().at(next.toDate()).create();
+  initTrigger();
 }
 
 /**
@@ -166,6 +184,7 @@ function makeWeeklyNotificationMessage(startAt) {
  * 実行日が指定の曜日（月曜日）であれば週次の予定を、それ以外は当日の予定を通知します。
  */
 function main() {
+  initTrigger();
   const now = new ExDate();
 
   const message = (now.getDay() === WEEKLY_NOTIFICATION_DAY)
