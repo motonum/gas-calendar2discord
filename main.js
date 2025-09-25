@@ -122,14 +122,12 @@ function makeWeeklyNotificationMessage(startAt) {
 // メイン関数
 function main() {
   const now = new ExDate();
-  // 月曜は週の予定を通知
-  if (now.getDay() === WEEKLY_NOTIFICATION_DAY) {
-    const message = makeWeeklyNotificationMessage(now);
-    if (!message) return;
-    notify(DISCORD_WEBHOOK_URL, message);
-  } else {
-    const message = makeDailyNotificationMessage(now);
-    if (!message) return;
+
+  const message = (now.getDay() === WEEKLY_NOTIFICATION_DAY)
+    ? makeWeeklyNotificationMessage(now)
+    : makeDailyNotificationMessage(now);
+
+  if (message) {
     notify(DISCORD_WEBHOOK_URL, message);
   }
 }
