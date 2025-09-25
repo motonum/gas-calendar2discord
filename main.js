@@ -37,6 +37,8 @@ class ExDate extends Date {
   }
 }
 
+// トリガーを設定
+// 既存のトリガーは削除してから新規作成する
 function refreshTrigger() {
   const allTriggers = ScriptApp.getProjectTriggers();
   allTriggers.filter(trigger => trigger.getHandlerFunction() === "main").forEach(trigger => {
@@ -45,12 +47,8 @@ function refreshTrigger() {
 
   const now = new ExDate();
 
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const date = now.getDate();
-  const hour = NOTIFICATION_HOUR;
-
-  const next = new ExDate(year, month, date, hour);
+  const next = new ExDate();
+  next.setHours(NOTIFICATION_HOUR, 0, 0, 0);
 
   if (now.getTime() >= next.getTime()) {
     next.shiftDate();
