@@ -70,17 +70,11 @@ function notify(url, message) {
   });
 }
 
-// 指定日の予定タイトルを取得
-function getEventTitles(date) {
+// 通知メッセージを作成
+function makeDailyNotificationMessage(date) {
   const myCalendar = CalendarApp.getCalendarById(CALENDAR_ID);
   const events = myCalendar.getEventsForDay(date);
   const eventTitles = events.map(event => event.getTitle());
-
-  return eventTitles;
-}
-
-// 通知メッセージを作成
-function makeDailyNotificationMessage(eventTitles) {
   if (eventTitles.length === 0) return null;
   const eventListString = eventTitles.map(
     eventTitle => `- ${eventTitle}`
@@ -127,7 +121,7 @@ function main() {
     if (!message) return;
     notify(DISCORD_WEBHOOK_URL, message);
   } else {
-    const message = makeDailyNotificationMessage(getEventTitles(now));
+    const message = makeDailyNotificationMessage(now);
     if (!message) return;
     notify(DISCORD_WEBHOOK_URL, message);
   }
