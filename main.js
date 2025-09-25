@@ -59,13 +59,17 @@ function refreshTrigger() {
 
 // Discordに通知
 function notify(url, message) {
-  UrlFetchApp.fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    payload: JSON.stringify({ content: message }),
-  });
+  try {
+    UrlFetchApp.fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      payload: JSON.stringify({ content: message }),
+    });
+  } catch (e) {
+    Logger.log(`Discordへの通知送信に失敗しました: ${e.message}`);
+  }
 }
 
 // 通知メッセージを作成
