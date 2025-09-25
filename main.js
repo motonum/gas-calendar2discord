@@ -91,24 +91,29 @@ function makeWeeklyNotificationMessage(startAt) {
 
   const myCalendar = CalendarApp.getCalendarById(CALENDAR_ID);
   const events = myCalendar.getEvents(startDate, endDate);
-  if (!events.length) return null;
-  const dates = events
-    .filter(event => {
-      if (!event.isAllDayEvent()) return true;
-      const start = new ExDate(event.getStartTime());
-      const end = new ExDate(event.getEndTime()).shiftDate(-1);
-      return ExDate.isSameDay(start, end);
-    })
-    .map(event => new ExDate(event.getStartTime()).omitTime().getTime());
-  
-  if (!dates.length) return null;
 
-  const deduplicatedDates = [... new Set(dates)];
-  const sortedDateStrings = deduplicatedDates.toSorted((a,b) => a - b).map(time => new ExDate(time).toFormattedString())
-  const groupedEvents = Map.groupBy(events, (event) => new ExDate(event.getStartTime()).toFormattedString());
+  // 複数日にまたがる終日イベントを除外
+  const singleDayEvents = events.filter(event => {
+    if (!event.isAllDayEvent()) return true;
+    const start = new ExDate(event.getStartTime());
+    const end = new ExDate(event.getEndTime()).shiftDate(-1);
+    return ExDate.isSameDay(start, end);
+  });
+
+  if (singleDayEvents.length === 0) return null;
+
+  // イベントを日付文字列でグループ化
+  const groupedEvents = Map.groupBy(singleDayEvents, (event) => new ExDate(event.getStartTime()).toFormattedString());
+
+  // 日付順にソートされた日付文字列の配列を生成
+  const uniqueTimestamps = [...new Set(singleDayEvents.map(event => new ExDate(event.getStartTime()).omitTime().getTime()))];
+  const sortedDateStrings = uniqueTimestamps.sort((a, b) => a - b).map(time => new ExDate(time).toFormattedString());
 
   const message = sortedDateStrings
-    .map(dateString => dateString + "\n- " + groupedEvents.get(dateString).map(event => event.getTitle()).join("\n- "))
+    .map(dateString => {
+      const eventTitles = groupedEvents.get(dateString).map(event => `- ${event.getTitle()}`).join("\n");
+      return `${dateString}\n${eventTitles}`;
+    })
     .join("\n\n");
 
   return `今週の予定はこちらです\n\n${message}`;
