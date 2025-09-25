@@ -1,3 +1,9 @@
+// 設定用定数
+
+const NOTIFICATION_HOUR = 8; // 通知する時間（24時間表記）
+const WEEKLY_NOTIFICATION_DAY = 1; // 曜日番号での月曜日（0:日曜, 1:月曜, ..., 6:土曜）
+
+// DiscordのWebhook URLとGoogleカレンダーIDをスクリプトプロパティに設定しておくこと
 const DISCORD_WEBHOOK_URL =
   PropertiesService.getScriptProperties().getProperty("DISCORD_WEBHOOK_URL");
 
@@ -21,9 +27,6 @@ class ExDate extends Date {
     this.setDate(this.getDate() + days);
     return this;
   }
-  getWeekdayName() {
-    return ["日", "月", "火", "水", "木", "金", "土"][this.getDay()];
-  }
   toDate() {
     return new Date(this.getTime());
   }
@@ -45,10 +48,9 @@ function refreshTrigger() {
   const year = now.getFullYear();
   const month = now.getMonth();
   const date = now.getDate();
-  const hour = 8;
-  const minute = 0;
+  const hour = NOTIFICATION_HOUR;
 
-  const next = new ExDate(year, month, date, hour, minute);
+  const next = new ExDate(year, month, date, hour);
 
   if (now.getTime() >= next.getTime()) {
     next.shiftDate();
@@ -120,7 +122,7 @@ function makeWeeklyNotificationMessage(startAt) {
 function main() {
   const now = new ExDate();
   // 月曜は週の予定を通知
-  if (now.getWeekdayName() === "月") {
+  if (now.getDay() === WEEKLY_NOTIFICATION_DAY) {
     const message = makeWeeklyNotificationMessage(now);
     if (!message) return;
     notify(DISCORD_WEBHOOK_URL, message);
