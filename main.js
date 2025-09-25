@@ -149,7 +149,7 @@ function makeWeeklyNotificationMessage(startAt) {
 
   // 日付順にソートされた日付文字列の配列を生成
   const uniqueTimestamps = [...new Set(singleDayEvents.map(event => new ExDate(event.getStartTime()).omitTime().getTime()))];
-  const sortedDateStrings = uniqueTimestamps.sort((a, b) => a - b).map(time => new ExDate(time).toFormattedString());
+  const sortedDateStrings = uniqueTimestamps.toSorted((a, b) => a - b).map(time => new ExDate(time).toFormattedString());
 
   const message = sortedDateStrings
     .map(dateString => {
