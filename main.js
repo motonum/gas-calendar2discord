@@ -11,7 +11,15 @@ const CALENDAR_ID =
   PropertiesService.getScriptProperties().getProperty("CALENDAR_ID");
 
 
+/**
+ * 標準のDateオブジェクトを拡張し、日付操作のユーティリティメソッドを提供するクラス。
+ * @extends {Date}
+ */
 class ExDate extends Date {
+  /**
+   * 日付を「M月d日 (ddd)」形式の日本語文字列に変換します。
+   * @returns {string} フォーマットされた日付文字列。
+   */
   toFormattedString() {
     return this.toLocaleString("ja-JP", {
       month: "short",
@@ -19,17 +27,36 @@ class ExDate extends Date {
       weekday: "short"
     })
   }
+  /**
+   * このインスタンスの時刻を0時0分0秒0ミリ秒に設定します（破壊的メソッド）。
+   * @returns {ExDate} 時刻がリセットされた自身のインスタンス。
+   */
   omitTime() {
     this.setHours(0, 0, 0, 0);
     return this;
   }
+  /**
+   * このインスタンスの日付を指定された日数だけ前後にずらします（破壊的メソッド）。
+   * @param {number} [days=1] - ずらす日数。正の数で未来、負の数で過去に移動します。
+   * @returns {ExDate} 日付が変更された自身のインスタンス。
+   */
   shiftDate(days = 1) {
     this.setDate(this.getDate() + days);
     return this;
   }
+  /**
+   * このExDateインスタンスから標準のDateオブジェクトを生成します。
+   * @returns {Date} 標準のDateオブジェクト。
+   */
   toDate() {
     return new Date(this.getTime());
   }
+  /**
+   * 2つのDateオブジェクトが同じ年、月、日であるかを比較します。
+   * @param {Date} day1 - 比較する1つ目の日付。
+   * @param {Date} day2 - 比較する2つ目の日付。
+   * @returns {boolean} 2つの日付が同じ日であればtrue、そうでなければfalse。
+   */
   static isSameDay(day1, day2) {
     return day1.getFullYear() === day2.getFullYear()
       && day1.getMonth() === day2.getMonth()
@@ -37,8 +64,11 @@ class ExDate extends Date {
   }
 }
 
-// トリガーを設定
-// 既存のトリガーは削除してから新規作成する
+/**
+ * スクリプトの実行トリガーを再設定します。
+ * 既存の'main'関数用トリガーをすべて削除し、指定された時刻に実行される新しいトリガーを作成します。
+ * この関数は手動で実行することを想定しています。
+ */
 function refreshTrigger() {
   const allTriggers = ScriptApp.getProjectTriggers();
   allTriggers.filter(trigger => trigger.getHandlerFunction() === "main").forEach(trigger => {
@@ -57,7 +87,11 @@ function refreshTrigger() {
   ScriptApp.newTrigger("main").timeBased().at(next.toDate()).create();
 }
 
-// Discordに通知
+/**
+ * 指定されたURL（Discord Webhook）にメッセージを送信します。
+ * @param {string} url - 送信先のWebhook URL。
+ * @param {string} message - 送信するメッセージ本文。
+ */
 function notify(url, message) {
   try {
     UrlFetchApp.fetch(url, {
@@ -72,7 +106,11 @@ function notify(url, message) {
   }
 }
 
-// 通知メッセージを作成
+/**
+ * 指定された日のGoogleカレンダーの予定から、日次通知メッセージを作成します。
+ * @param {Date} date - 予定を取得する日付。
+ * @returns {string|null} 生成された通知メッセージ。予定がない場合はnull。
+ */
 function makeDailyNotificationMessage(date) {
   const myCalendar = CalendarApp.getCalendarById(CALENDAR_ID);
   const events = myCalendar.getEventsForDay(date);
@@ -84,7 +122,11 @@ function makeDailyNotificationMessage(date) {
   return `本日の予定はこちらです\n${eventListString}`
 }
 
-// 週の通知メッセージを作成
+/**
+ * 指定された開始日から1週間分のGoogleカレンダーの予定から、週次通知メッセージを作成します。
+ * @param {Date} startAt - 予定を取得し始める日付。
+ * @returns {string|null} 生成された通知メッセージ。予定がない場合はnull。
+ */
 function makeWeeklyNotificationMessage(startAt) {
   const startDate = new ExDate(startAt.getTime()).omitTime();
   const endDate = new ExDate(startAt.getTime()).omitTime().shiftDate(7);
@@ -119,7 +161,10 @@ function makeWeeklyNotificationMessage(startAt) {
   return `今週の予定はこちらです\n\n${message}`;
 }
 
-// メイン関数
+/**
+ * メイン関数。トリガーによって毎日実行されます。
+ * 実行日が指定の曜日（月曜日）であれば週次の予定を、それ以外は当日の予定を通知します。
+ */
 function main() {
   const now = new ExDate();
 
